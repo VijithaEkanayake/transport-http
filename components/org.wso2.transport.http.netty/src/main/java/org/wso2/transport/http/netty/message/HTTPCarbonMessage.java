@@ -35,6 +35,7 @@ import org.wso2.transport.http.netty.contract.ServerConnectorFuture;
 import org.wso2.transport.http.netty.contractimpl.DefaultHttpResponseFuture;
 import org.wso2.transport.http.netty.contractimpl.HttpWsServerConnectorFuture;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +54,7 @@ public class HTTPCarbonMessage {
     private final ServerConnectorFuture httpOutboundRespFuture = new HttpWsServerConnectorFuture();
     private final DefaultHttpResponseFuture httpOutboundRespStatusFuture = new DefaultHttpResponseFuture();
     private final Observable contentObservable = new DefaultObservable();
+    private IOException ioException;
 
     public HTTPCarbonMessage(HttpMessage httpMessage, Listener contentListener) {
         this.httpMessage = httpMessage;
@@ -79,6 +81,10 @@ public class HTTPCarbonMessage {
     public synchronized void addHttpContent(HttpContent httpContent) {
         contentObservable.notifyAddListener(httpContent);
         if (messageFuture != null) {
+            if (this.getIoException() != null) {
+                httpContent.release();
+                throw new RuntimeException(this.getIoException());
+            }
             contentObservable.notifyGetListener(httpContent);
             blockingEntityCollector.addHttpContent(httpContent);
             messageFuture.notifyMessageListener(blockingEntityCollector.getHttpContent());
@@ -89,7 +95,11 @@ public class HTTPCarbonMessage {
                 this.removeMessageFuture();
             }
         } else {
-            blockingEntityCollector.addHttpContent(httpContent);
+            if (this.getIoException() == null) {
+                blockingEntityCollector.addHttpContent(httpContent);
+            } else {
+                httpContent.release();
+            }
         }
     }
 
@@ -354,5 +364,13 @@ public class HTTPCarbonMessage {
      */
     public HttpResponse getNettyHttpResponse() {
         return (HttpResponse) this.httpMessage;
+    }
+
+    public IOException getIoException() {
+        return ioException;
+    }
+
+    public void setIoException(IOException ioException) {
+        this.ioException = ioException;
     }
 }
