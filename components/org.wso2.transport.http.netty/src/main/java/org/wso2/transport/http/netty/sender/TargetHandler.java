@@ -85,7 +85,9 @@ public class TargetHandler extends ChannelInboundHandlerAdapter {
     @SuppressWarnings("unchecked")
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        outboundRequestMsg.setIoException(new IOException("Response message already received"));
+        if (outboundRequestMsg != null) {
+            outboundRequestMsg.setIoException(new IOException("Response message already received"));
+        }
         if (targetChannel.isRequestHeaderWritten()) {
             if (msg instanceof HttpResponse) {
                 HttpResponse httpInboundResponse = (HttpResponse) msg;

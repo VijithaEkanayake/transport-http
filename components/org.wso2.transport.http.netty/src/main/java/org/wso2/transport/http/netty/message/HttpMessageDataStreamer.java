@@ -42,7 +42,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
- * Provides input and output stream by taking the HttpCarbonMessage
+ * Provides input and output stream by taking the HttpCarbonMessage.
  */
 public class HttpMessageDataStreamer {
 
@@ -131,7 +131,7 @@ public class HttpMessageDataStreamer {
         public void write(int b) throws IOException, EncoderException {
             byteStreamWriteLock.lock();
             try {
-                if (ioException != null) {
+                if (httpCarbonMessage.getIoException() != null) {
                     throw new EncoderException(ioException.getMessage());
                 }
             } finally {
@@ -163,6 +163,8 @@ public class HttpMessageDataStreamer {
                 } else {
                     httpCarbonMessage.addHttpContent(LastHttpContent.EMPTY_LAST_CONTENT);
                 }
+            } catch (RuntimeException ex) {
+                throw new EncoderException(httpCarbonMessage.getIoException());
             } catch (Exception e) {
                 log.error("Error while closing output stream but underlying resources are reset", e);
             } finally {

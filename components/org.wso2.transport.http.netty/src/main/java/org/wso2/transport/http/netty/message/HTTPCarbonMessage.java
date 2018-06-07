@@ -22,6 +22,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMessage;
@@ -82,7 +83,9 @@ public class HTTPCarbonMessage {
         contentObservable.notifyAddListener(httpContent);
         if (messageFuture != null) {
             if (this.getIoException() != null) {
-                httpContent.release();
+                blockingEntityCollector.addHttpContent(new DefaultLastHttpContent());
+                messageFuture.notifyMessageListener(blockingEntityCollector.getHttpContent());
+                this.removeMessageFuture();
                 throw new RuntimeException(this.getIoException());
             }
             contentObservable.notifyGetListener(httpContent);

@@ -155,11 +155,7 @@ public class SourceHandler extends ChannelInboundHandlerAdapter {
                     sourceHandlerErrorHandler.setState(RECEIVING_ENTITY_BODY);
 
                     HttpContent httpContent = (HttpContent) msg;
-                    try {
-                        inboundRequestMsg.addHttpContent(httpContent);
-                    } catch (RuntimeException ex) {
-//                        httpContent.release();
-                    }
+                    inboundRequestMsg.addHttpContent(httpContent);
                     if (Util.isLastHttpContent(httpContent)) {
                         if (handlerExecutor != null) {
                             handlerExecutor.executeAtSourceRequestSending(inboundRequestMsg);
